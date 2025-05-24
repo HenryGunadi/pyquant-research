@@ -16,5 +16,7 @@ class Portfolio():
         
         self.__holdings.append(trade)
         
-    def remove_trade(self, trade):
-        pass
+    def remove_trade(self, id: str):
+        for trade in self.__holdings:
+            if trade.id == id:
+                self.__holdings.remove(trade)
