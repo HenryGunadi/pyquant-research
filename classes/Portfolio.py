@@ -1,22 +1,24 @@
 from typing import List
-from Trade import Trade
+from .Trade import Trade
+import datetime
 
 class Portfolio():
     def __init__(self):
-        self.__holdings: List[Trade] = []
+        self.__active_trades: List[Trade] = []
+        self.__closed_trades: List[Trade] = []
         
     @property
-    def holdings(self) -> List[Trade]:
-        return self.__holdings
+    def active_trades(self) -> List[Trade]:
+        return self.__active_trades
     
-    @holdings.setter
-    def holdings(self, trade: Trade) -> None:
-        if not isinstance(trade, Trade):
-            raise TypeError("Invalid trade object")
-        
-        self.__holdings.append(trade)
-        
-    def remove_trade(self, id: str):
-        for trade in self.__holdings:
-            if trade.id == id:
-                self.__holdings.remove(trade)
+    @property
+    def closed_trades(self) -> List[Trade]:
+        return self.__closed_trades
+
+    def add_trade(self, trade: Trade):
+        self.active_trades.append(trade)
+
+    def close_trade(self, trade: Trade):
+        trade.close()
+        self.active_trades.remove(trade)
+        self.closed_trades.append(trade)

@@ -1,9 +1,15 @@
+from __future__ import annotations
 import uuid
-from Account import Account
 from datetime import date, datetime
 from abc import ABC, abstractmethod
-from Strategies import Strategy
+from .Strategies import Strategy
 from typing import Literal
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .Account import Account
+    from .Strategies import Strategy
 
 class ExitCondition(ABC):
     def __init__(self, expiration: datetime = None):
@@ -39,21 +45,22 @@ class Exit(ExitCondition):
         return current_price >= self.exit_price
 
 class Trade():
-    def __init__(self, symbol: str, entry_time: datetime, entry_price: float, account: Account, shares: int, position_type: Literal["long", "short"], strategy: Strategy = None, stop_loss: StopLossExit = None, exit: Exit = None):
+    def __init__(self, symbol: str, entry_time: datetime, entry_price: float, account: "Account", shares: int, position_type: Literal["long", "short"], strategy: "Strategy" = None, stop_loss: StopLossExit = None, exit: Exit = None):
         self.__id: str = str(uuid.uuid4())
         self.symbol: str = symbol
         # assume these are non fractional shares
         self.shares: int = shares
         self.__entry_price: float = entry_price
-        self.__entry_time: datetime = entry_time
+        self.entry_time: datetime = entry_time
         self.stop_loss: StopLossExit = stop_loss
         self.exit: Exit = exit
-        self.account: Account = account
+        self.account: "Account" = account
         self.__average_price: float = entry_price
         self.__invested: float = shares * entry_price
-        self.strategy: Strategy = strategy
+        self.strategy: "Strategy" = strategy
         self.position_type = position_type
         self.__pnl: float = 0
+        self.exit_time: datetime = None
 
     @property
     def id(self) -> str:
@@ -64,15 +71,11 @@ class Trade():
         return self.__pnl
     
     @property
-    def entry_time(self) -> datetime:
-        return self.__entry_time
-    
-    @property
     def shares(self) -> int:
         return self.__shares
 
     @property
-    def account(self) -> Account:
+    def account(self) -> "Account":
         return self.__account
 
     @property
@@ -92,7 +95,7 @@ class Trade():
         return self.__average_price
 
     @property
-    def strategy(self) -> Strategy:
+    def strategy(self) -> "Strategy":
         return self.__strategy
     
     @property
@@ -106,8 +109,8 @@ class Trade():
         return (self.__pnl / self.__invested) * 100
     
     @strategy.setter
-    def strategy(self, strategy: Strategy) -> None:
-        if not isinstance(strategy, (Strategy, None)):
+    def strategy(self, strategy: "Strategy") -> None:
+        if not isinstance(strategy, ("Strategy", None)):
             raise TypeError("Invalid strategy object type")
 
         self.__strategy = strategy
@@ -127,8 +130,8 @@ class Trade():
         self.__exit = exit
     
     @account.setter
-    def account(self, account: Account) -> None:
-        if not isinstance(account, Account):
+    def account(self, account: "Account") -> None:
+        if not isinstance(account, "Account"):
             raise TypeError("Invalid account type object")
 
         self.__account = account
@@ -154,3 +157,7 @@ class Trade():
         self.__shares += shares
         self.__average_price = total_cost / self.__shares
         self.__invested = self.__average_price * self.__shares
+
+    def close(self, exit_time: datetime):
+        self.exit_time = exit_time
+        self.account.portfolio.close_trade(trade=self)

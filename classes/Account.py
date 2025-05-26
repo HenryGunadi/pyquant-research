@@ -1,8 +1,8 @@
-from Portfolio import Portfolio
+from .Portfolio import Portfolio
 
 class Account():
-    def __init__(self):
-        self.balance = 0
+    def __init__(self, balance: float):
+        self.balance = balance
         self.__portfolio: Portfolio = Portfolio()
         
     @property

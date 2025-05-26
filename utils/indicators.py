@@ -1,7 +1,7 @@
 # to import dependecies outside ipynb, select your current python interpreter
 import pandas as pd
 
-def calculate_rsi_ema(data: pd.DataFrame, period: int = 14):
+def calculate_rsi_ema(data: pd.DataFrame, period: int = 14) -> pd.Series:
     delta = data["Close"].diff()
 
     gain = delta.where(delta > 0, 0.0)
