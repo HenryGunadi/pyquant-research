@@ -2,14 +2,12 @@ from __future__ import annotations
 import uuid
 from datetime import date, datetime
 from abc import ABC, abstractmethod
-from .Strategies import Strategy
 from typing import Literal
 
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .Account import Account
-    from .Strategies import Strategy
 
 class ExitCondition(ABC):
     def __init__(self, expiration: datetime = None):
@@ -45,7 +43,7 @@ class Exit(ExitCondition):
         return current_price >= self.exit_price
 
 class Trade():
-    def __init__(self, symbol: str, entry_time: datetime, entry_price: float, account: "Account", shares: int, position_type: Literal["long", "short"], strategy: "Strategy" = None, stop_loss: StopLossExit = None, exit: Exit = None):
+    def __init__(self, symbol: str, entry_time: datetime, entry_price: float, account: "Account", shares: int, position_type: Literal["long", "short"], stop_loss: StopLossExit = None, exit: Exit = None):
         self.__id: str = str(uuid.uuid4())
         self.symbol: str = symbol
         # assume these are non fractional shares
@@ -57,7 +55,6 @@ class Trade():
         self.account: "Account" = account
         self.__average_price: float = entry_price
         self.__invested: float = shares * entry_price
-        self.strategy: "Strategy" = strategy
         self.position_type = position_type
         self.__pnl: float = 0
         self.exit_time: datetime = None
@@ -95,10 +92,6 @@ class Trade():
         return self.__average_price
 
     @property
-    def strategy(self) -> "Strategy":
-        return self.__strategy
-    
-    @property
     def invested(self) -> float:
         return self.__invested
     
@@ -108,13 +101,6 @@ class Trade():
             return 0
         return (self.__pnl / self.__invested) * 100
     
-    @strategy.setter
-    def strategy(self, strategy: "Strategy") -> None:
-        if not isinstance(strategy, ("Strategy", None)):
-            raise TypeError("Invalid strategy object type")
-
-        self.__strategy = strategy
-
     @stop_loss.setter
     def stop_loss(self, stop_loss: StopLossExit) -> None:
         if not isinstance(stop_loss, (StopLossExit, None)):
