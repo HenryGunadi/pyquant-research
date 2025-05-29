@@ -15,6 +15,7 @@ if TYPE_CHECKING:
 class Signal:
     position_type: str | None
     index: int | None
+    rsi_value: float | None
 
 class Strategy(ABC):
     @abstractmethod
@@ -39,26 +40,35 @@ class RSI_Strategy(Strategy):
 
         for index, rsi_value in RSI_Strategy.rsi_values.items():
             if rsi_value <= 30:
-                return Signal(position_type="long", index=index)
+                return Signal(position_type="long", index=index, rsi_value=RSI_Strategy.rsi_values[index])
             elif rsi_value >= 70:
-                return Signal(position_type="short", index=index)
+                return Signal(position_type="short", index=index, rsi_value=RSI_Strategy.rsi_values[index])
 
-        return Signal(position_type=None, index=None)
+        return Signal(position_type=None, index=None, rsi_value=None)
 
     @staticmethod
-    def execute_strategy(data: pd.DataFrame | pd.Series, account: Account, index, trade: "Trade") -> Union["Trade", None]:
-        print("Current index : ", index + 1)
-        if trade.exit.should_exit(data["High"].iloc[index + 1], index + 1):
-            trade.update_pnl(data["high"].iloc[index + 1])
-            trade.close()
-            return
-        elif trade.stop_loss.should_exit(data["Low"].iloc[index + 1], index + 1):
-            trade.update_pnl(data["Low"].iloc[index + 1])
-            trade.close()
+    def execute_strategy(data: pd.DataFrame | pd.Series, account: Account, index, trade: "Trade", position_type: Literal["long", "short"]) -> Union["Trade", None]:
+        if index > len(data):
+            print("Im returning")
             return
         
-        trade.update_pnl(data["Close"].iloc[index + 1], index + 1)
-        RSI_Strategy.execute_strategy(data, account, index=index + 1)
-
+        print("INDEX : ", index)        
+        if trade.exit.should_exit(current_price=data["High"].iloc[index] if position_type == "long" else data["Low"].iloc[index], current_time=data.iloc[index].index):
+            trade.update_pnl(data["high"].iloc[index])
+            trade.close(exit_time=data.index[index])
+            return
+        elif trade.stop_loss.should_exit(current_price=data["Low"].iloc[index] if position_type == "long" else data["High"].iloc[index], current_time=data.iloc[index].index):
+            trade.update_pnl(data["Low"].iloc[index])
+            trade.close(exit_time=data.index[index])
+            return
+        
+        trade.update_pnl(data["Close"].iloc[index])
+        
+        RSI_Strategy.execute_strategy(data=data,
+                                      account=account,
+                                      index=index + 1,
+                                      trade=trade,
+                                      position_type=position_type)
+        
     def next():
         pass

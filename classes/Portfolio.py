@@ -19,6 +19,5 @@ class Portfolio():
         self.active_trades.append(trade)
 
     def close_trade(self, trade: Trade):
-        trade.close()
         self.active_trades.remove(trade)
         self.closed_trades.append(trade)
